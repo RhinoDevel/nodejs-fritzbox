@@ -39,8 +39,8 @@ const fb = { // FritzBox
 
                 // Create a new user via FritzBox web interface for this:
                 //
-                username: '********',
-                password: '********'
+                username: '********', // Kind of bad: May be overwritten,
+                password: '********'  //              if file is used as module.
             },
 
             // Change the values of this property's properties to extract other
@@ -299,13 +299,21 @@ const fb = { // FritzBox
      *  Calls given callback function when done with argument being null on
      *  error or the retrieved data on success.
      */
-    exec = function(callback)
+    exec = function(callback, username, password)
     {
         let firstReq = null;
 
         if(typeof callback === 'function')
         {
             execCallback = callback;
+        }
+        if(typeof username === 'string')
+        {
+            fb.con.username = username; // Kind of bad.
+        }
+        if(typeof password === 'string')
+        {
+            fb.con.password = password; // Kind of bad.
         }
 
         // Trigger first HTTP request to FritzBox to get digest auth. nonce, etc:
@@ -330,4 +338,4 @@ module.exports.exec = exec;
 
 // Option 2: To use as stand-alone script:
 //
-//exec(null);
+//exec(null, null, null);

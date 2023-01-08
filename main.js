@@ -3,4 +3,4 @@
 
 const fb = require('./nodejs-fritzbox.js');
 
-fb.exec((o) => console.log(JSON.stringify(o)));
+fb.exec((o) => console.log(JSON.stringify(o)), '********', '********');
