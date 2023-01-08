@@ -16,7 +16,6 @@
 // Notes:
 //
 // - Tested with a FritzBox 7530 and NodeJS v18.3.0 LTS.
-// - No error handling.
 // - No security considerations (should be called from local LAN / intranet,
 //   only).
 
@@ -48,6 +47,8 @@ const fb = { // FritzBox
 
                 /** Extract relevant data from given XML result retrieved from
                  *  FritzBox and return it.
+                 * 
+                 *  Returns null on error.
                  */
                 getResultObj: function(xml)
                 {
@@ -62,16 +63,18 @@ const fb = { // FritzBox
 
                     for(propName in tags)
                     {
-                        const tag = tags[propName], 
-                            beg = xml.indexOf(tag) 
-                                    + tag.length 
-                                    + 1, // +1 for '>'.
-                            end = xml.indexOf(tag, beg) 
-                                    - 1 
-                                    - 1, // -1 for '<'.
-                            valStr = xml.substring(beg, end);
+                        const tag = tags[propName],
+                            tagIndex = xml.indexOf(tag);
+                        let beg = null, end = null;
 
-                        retVal[propName] = valStr;
+                        if(tagIndex === -1)
+                        {
+                            return null;
+                        }
+
+                        beg = xml.indexOf(tag) + tag.length + 1; // +1 for '>'.  
+                        end = xml.indexOf(tag, beg) - 1 - 1, // -1 for '<'.
+                        retVal[propName] = xml.substring(beg, end);
                     };
 
                     // Some conversions (we want integers, only):
@@ -125,6 +128,7 @@ const fb = { // FritzBox
             host: fb.con.ip,
             path: fb.action.eventSubUrl,
             port: fb.con.port,
+            timeout: 5000, // ms
             method: 'POST',
             headers: {
                 'Content-Type': 'text/xml; charset="utf-8"',
@@ -197,9 +201,14 @@ const fb = { // FritzBox
     {
         const o = fb.action.getResultObj(xml);
 
+        if(o === null)
+        {
+            console.log('Error: Response interpr. failed: "' + xml + '"!');
+            return;
+        }
+
         // Enter your code here to do something useful with the resulting data:
         //
-        //console.log(xml);
         console.log(o);
     },
 
@@ -235,6 +244,9 @@ const fb = { // FritzBox
         options.headers['Authorization'] = headerVal; // Hard-coded (key).
 
         secondReq = http.request(options, onSecondReqStarted);
+        secondReq.on(
+            'error',
+            (e) => console.log('Error: 2nd req. failed: "' + e.message + '"!'));
         secondReq.write(content);
         secondReq.end();
     },
@@ -262,6 +274,9 @@ let firstReq = null;
 // Trigger first HTTP request to FritzBox to get digest auth. nonce, etc:
 //
 firstReq = http.request(options, onFirstReqStarted);
+firstReq.on(
+    'error',
+    (e) => console.log('Error: 1st req. failed: "' + e.message + '"!'));
 firstReq.write(content);
 firstReq.end();
 //
