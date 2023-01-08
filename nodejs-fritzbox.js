@@ -13,6 +13,15 @@
 // - http
 // - md5 from https://www.npmjs.com/package/md5
 
+// Instructions:
+//
+// - See end of file and select either using this file as stand-alone script or
+//   as module to use from another source code file.
+//
+// - Browse the source code of this file. It includes the connection settings
+//   and credentials to communicate with the FritzBox and also the (so called)
+//   action. That action can be replaced to let the FritzBox do something else.
+
 // Notes:
 //
 // - Tested with a FritzBox 7530 and NodeJS v18.3.0 LTS.
@@ -220,7 +229,7 @@ const fb = { // FritzBox
 
         // Enter your code here to do something useful with the resulting data:
         //
-        console.log(o);
+        //console.log(o);
         tryCallExecCallback(o);
     },
 
@@ -285,6 +294,11 @@ const fb = { // FritzBox
             });
     },
 
+    /** Try to retrieve data from FritzBox.
+     * 
+     *  Calls given callback function when done with argument being null on
+     *  error or the retrieved data on success.
+     */
     exec = function(callback)
     {
         let firstReq = null;
@@ -310,4 +324,10 @@ const fb = { // FritzBox
         // => onFirstReqStarted()
     };
 
-exec(null);
+// Option 1: To use as module:
+//
+module.exports.exec = exec;
+
+// Option 2: To use as stand-alone script:
+//
+//exec(null);
