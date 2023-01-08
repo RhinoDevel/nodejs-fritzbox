@@ -138,6 +138,16 @@ const fb = { // FritzBox
             }
         },
 
+    execCallback = null, // To be filled by exec() function.
+
+    tryCallExecCallback = function(o)
+    {
+        if(execCallback !== null)
+        {
+            execCallback(o);
+        }
+    },
+
     /** Create object (dictionary) representation of digest authentication
      *  header string given.
      */
@@ -204,12 +214,14 @@ const fb = { // FritzBox
         if(o === null)
         {
             console.error('Error: Response interpr. failed: "' + xml + '"!');
+            tryCallExecCallback(null);
             return;
         }
 
         // Enter your code here to do something useful with the resulting data:
         //
         console.log(o);
+        tryCallExecCallback(o);
     },
 
     onSecondReqStarted = function(response)
@@ -246,8 +258,11 @@ const fb = { // FritzBox
         secondReq = http.request(options, onSecondReqStarted);
         secondReq.on(
             'error',
-            (e) => console.error(
-                    'Error: 2nd req. failed: "' + e.message + '"!'));
+            (e) => 
+            {
+                console.error('Error: 2nd req. failed: "' + e.message + '"!');
+                tryCallExecCallback(null);
+            });
         secondReq.write(content);
         secondReq.end();
     },
@@ -270,20 +285,29 @@ const fb = { // FritzBox
             });
     },
 
-    exec = function()
+    exec = function(callback)
     {
         let firstReq = null;
+
+        if(typeof callback === 'function')
+        {
+            execCallback = callback;
+        }
 
         // Trigger first HTTP request to FritzBox to get digest auth. nonce, etc:
         //
         firstReq = http.request(options, onFirstReqStarted);
         firstReq.on(
             'error',
-            (e) => console.error('Error: 1st req. failed: "' + e.message + '"!'));
+            (e) => 
+            {
+                console.error('Error: 1st req. failed: "' + e.message + '"!');
+                tryCallExecCallback(null);
+            });
         firstReq.write(content);
         firstReq.end();
         //
         // => onFirstReqStarted()
     };
 
-exec();
+exec(null);
