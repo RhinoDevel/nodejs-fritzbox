@@ -10,7 +10,7 @@
 
 // Requirements:
 //
-// - http
+// - http (included in NodeJS)
 // - md5 from https://www.npmjs.com/package/md5
 
 // Instructions:
