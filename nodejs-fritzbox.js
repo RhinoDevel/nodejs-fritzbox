@@ -268,17 +268,22 @@ const fb = { // FritzBox
                     response.rawHeaders.find(
                         s => s.includes(digestKeyDigestRealm)));
             });
+    },
+
+    exec = function()
+    {
+        let firstReq = null;
+
+        // Trigger first HTTP request to FritzBox to get digest auth. nonce, etc:
+        //
+        firstReq = http.request(options, onFirstReqStarted);
+        firstReq.on(
+            'error',
+            (e) => console.error('Error: 1st req. failed: "' + e.message + '"!'));
+        firstReq.write(content);
+        firstReq.end();
+        //
+        // => onFirstReqStarted()
     };
 
-let firstReq = null;
-
-// Trigger first HTTP request to FritzBox to get digest auth. nonce, etc:
-//
-firstReq = http.request(options, onFirstReqStarted);
-firstReq.on(
-    'error',
-    (e) => console.error('Error: 1st req. failed: "' + e.message + '"!'));
-firstReq.write(content);
-firstReq.end();
-//
-// => onFirstReqStarted()
+exec();
