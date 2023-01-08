@@ -203,7 +203,7 @@ const fb = { // FritzBox
 
         if(o === null)
         {
-            console.log('Error: Response interpr. failed: "' + xml + '"!');
+            console.error('Error: Response interpr. failed: "' + xml + '"!');
             return;
         }
 
@@ -246,7 +246,8 @@ const fb = { // FritzBox
         secondReq = http.request(options, onSecondReqStarted);
         secondReq.on(
             'error',
-            (e) => console.log('Error: 2nd req. failed: "' + e.message + '"!'));
+            (e) => console.error(
+                    'Error: 2nd req. failed: "' + e.message + '"!'));
         secondReq.write(content);
         secondReq.end();
     },
@@ -276,7 +277,7 @@ let firstReq = null;
 firstReq = http.request(options, onFirstReqStarted);
 firstReq.on(
     'error',
-    (e) => console.log('Error: 1st req. failed: "' + e.message + '"!'));
+    (e) => console.error('Error: 1st req. failed: "' + e.message + '"!'));
 firstReq.write(content);
 firstReq.end();
 //
