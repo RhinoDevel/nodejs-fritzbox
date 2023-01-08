@@ -7,7 +7,6 @@ Requirements:
 
 Notes:
 - Tested with a FritzBox 7530 and NodeJS v18.3.0 LTS.
-- No error handling.
 - No security considerations (should be called from local LAN / intranet, only).
 
 Sources:
