@@ -286,11 +286,20 @@ const fb = { // FritzBox
             'end',
             function() // => Answer was retrieved completely from server.
             {
-                // Find digest authentication header. => onFirstReqDone()
+                // Find digest authentication header.
                 //
-                onFirstReqDone(
-                    response.rawHeaders.find(
-                        s => s.includes(digestKeyDigestRealm)));
+                var digestAuthHeaderStr = response.rawHeaders.find(
+                        s => s.includes(digestKeyDigestRealm));
+
+                if(typeof digestAuthHeaderStr !== 'string')
+                {
+                    // We are assuming that authorization was already done and
+                    // is still valid:
+                    //
+                    onXmlRetrieved(str);
+                    return;
+                }
+                onFirstReqDone(digestAuthHeaderStr);
             });
     },
 
@@ -316,7 +325,8 @@ const fb = { // FritzBox
             fb.con.password = password; // Kind of bad.
         }
 
-        // Trigger first HTTP request to FritzBox to get digest auth. nonce, etc:
+        // Trigger first HTTP request to FritzBox to get digest auth. nonce,
+        // etc:
         //
         firstReq = http.request(options, onFirstReqStarted);
         firstReq.on(
