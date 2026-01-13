@@ -111,7 +111,7 @@ const fb = { // FritzBox
                         + fb.action.arguments
                 + '</u:' + fb.action.actionName + '>'
             + '</s:Body>'
-        + '</s:Envelope>'
+        + '</s:Envelope>',
 
     // Digest authentication stuff:
     //
