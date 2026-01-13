@@ -38,66 +38,74 @@ const fb = { // FritzBox
                 // Create a new user via FritzBox web interface for this:
                 //
                 username: '********', // Kind of bad: May be overwritten,
-                password: '********'  //              if file is used as module.
+                password: '********', //              if file is used as module.
+
+                // Currently, only one action is available via this hard-coded
+                // setup (should be improved..):
+                actionPropName: 'getGenericDeviceInfos'
             },
 
-            // Change the values of this property's properties to extract other
-            // data from FritzBox (or change settings, etc.):
+            // Add more here, if necessary and select one above, via
+            // fb.con.actionPropName:
             //
-            action: { // Get smart switch data (via index).
-                eventSubUrl: '/upnp/control/x_homeauto',
-                serviceType: 'urn:dslforum-org:service:X_AVM-DE_Homeauto:1',
-                actionName: 'GetGenericDeviceInfos',
-                arguments: '<u:NewIndex>'
-                                + String(0) // Hard-coded index!
-                            + '</u:NewIndex>',
+            actions: {
+                getGenericDeviceInfos: { // Get smart switch data (via index).
+                    eventSubUrl: '/upnp/control/x_homeauto',
+                    serviceType: 'urn:dslforum-org:service:X_AVM-DE_Homeauto:1',
+                    actionName: 'GetGenericDeviceInfos',
+                    arguments: '<u:NewIndex>'
+                                    + String(0) // Hard-coded index!
+                                + '</u:NewIndex>',
 
-                /** Extract relevant data from given XML result retrieved from
-                 *  FritzBox and return it.
-                 * 
-                 *  Returns null on error.
-                 */
-                getResultObj: function(xml)
-                {
-                    const tags = {
-                            power: 'NewMultimeterPower', // [1/100 W]
-                            energy: 'NewMultimeterEnergy', // [Wh]
-                            temperature: 'NewTemperatureCelsius', // [1/10 °C]
-                            switchState: 'NewSwitchState' // [OFF/ON]
-                        };
-                    let retVal = {},
-                        propName = null;
-
-                    for(propName in tags)
+                    /** Extract relevant data from given XML result retrieved
+                     *  from FritzBox and return it.
+                     * 
+                     *  Returns null on error.
+                     */
+                    getResultObj: function(xml)
                     {
-                        const tag = tags[propName],
-                            tagIndex = xml.indexOf(tag);
-                        let beg = null, end = null;
+                        const tags = {
+                                power: 'NewMultimeterPower', // [1/100 W]
+                                energy: 'NewMultimeterEnergy', // [Wh]
+                                temperature: 'NewTemperatureCelsius', // [1/10 °C]
+                                switchState: 'NewSwitchState' // [OFF/ON]
+                            };
+                        let retVal = {},
+                            propName = null;
 
-                        if(tagIndex === -1)
+                        for(propName in tags)
                         {
-                            return null;
-                        }
+                            const tag = tags[propName],
+                                tagIndex = xml.indexOf(tag);
+                            let beg = null, end = null;
 
-                        beg = xml.indexOf(tag) + tag.length + 1; // +1 for '>'.  
-                        end = xml.indexOf(tag, beg) - 1 - 1, // -1 for '<'.
-                        retVal[propName] = xml.substring(beg, end);
-                    };
+                            if(tagIndex === -1)
+                            {
+                                return null;
+                            }
 
-                    // Some conversions (we want integers, only):
-                    //
-                    retVal.power = parseInt(retVal.power, 10);
-                    retVal.energy = parseInt(retVal.energy, 10);
-                    retVal.temperature = parseInt(retVal.temperature, 10);
-                    retVal.switchState = retVal.switchState === 'ON'
-                        ? 1
-                        : 0; // Not 100% correct (there are four states:
-                             // OFF, ON, TOGGLE and UNDEFINED), but OK.
+                            beg = xml.indexOf(tag) + tag.length + 1; // +1 for '>'.  
+                            end = xml.indexOf(tag, beg) - 1 - 1, // -1 for '<'.
+                            retVal[propName] = xml.substring(beg, end);
+                        };
 
-                    return retVal;
+                        // Some conversions (we want integers, only):
+                        //
+                        retVal.power = parseInt(retVal.power, 10);
+                        retVal.energy = parseInt(retVal.energy, 10);
+                        retVal.temperature = parseInt(retVal.temperature, 10);
+                        retVal.switchState = retVal.switchState === 'ON'
+                            ? 1
+                            : 0; // Not 100% correct (there are four states:
+                                 // OFF, ON, TOGGLE and UNDEFINED), but OK.
+
+                        return retVal;
+                    }
                 }
             },
         },
+
+    action = fb.con.actions[fb.con.actionPropName], // The action in use.
 
     // POST message's body's content:
     //
@@ -106,10 +114,10 @@ const fb = { // FritzBox
             + ' s:encodingStyle=\'http://schemas.xmlsoap.org/soap/encoding/\''
             + ' xmlns:s=\'http://schemas.xmlsoap.org/soap/envelope/\'>'
             + '<s:Body>'
-                + '<u:' + fb.action.actionName
-                    + ' xmlns:u=\'' + fb.action.serviceType + '\'>'
-                        + fb.action.arguments
-                + '</u:' + fb.action.actionName + '>'
+                + '<u:' + action.actionName
+                    + ' xmlns:u=\'' + action.serviceType + '\'>'
+                        + action.arguments
+                + '</u:' + action.actionName + '>'
             + '</s:Body>'
         + '</s:Envelope>',
 
@@ -133,14 +141,14 @@ const fb = { // FritzBox
     
     options = { // Options to be used by/for the HTTP requests.
             host: fb.con.ip,
-            path: fb.action.eventSubUrl,
+            path: action.eventSubUrl,
             port: fb.con.port,
             timeout: 5000, // ms
             method: 'POST',
             headers: {
                 'Content-Type': 'text/xml; charset="utf-8"',
                 'Content-Length': content.length,
-                'SoapAction': fb.action.serviceType + '#' + fb.action.actionName
+                'SoapAction': action.serviceType + '#' + action.actionName
                 // Bad: Authentication header will be added here by second req.!
             }
         },
@@ -190,7 +198,7 @@ const fb = { // FritzBox
                     fb.con.username 
                     + ':' + p[digestKeyDigestRealm]
                     + ':' + fb.con.password),
-            ha2 = md5('POST' + ':' + fb.action.eventSubUrl), // Lower-case!
+            ha2 = md5('POST' + ':' + action.eventSubUrl), // Lower-case!
             retVal = md5( // Lower-case!
                 ha1 
                 + ':' + p[digestKeyNonce]
@@ -207,7 +215,7 @@ const fb = { // FritzBox
         return 'Digest username="' + fb.con.username + '"'
             + ', realm="' + p[digestKeyDigestRealm] + '"'
             + ', nonce="' + p[digestKeyNonce] + '"'
-            + ', uri="' + fb.action.eventSubUrl + '"'
+            + ', uri="' + action.eventSubUrl + '"'
             + ', qop="' + p[digestKeyQop] + '"' // Must be 'auth'!
             + ', nc="' + digestNonceCount + '"'
             + ', cnonce="' + digestCnonce + '"'
@@ -216,7 +224,7 @@ const fb = { // FritzBox
 
     onXmlRetrieved = function(xml)
     {
-        const o = fb.action.getResultObj(xml);
+        const o = action.getResultObj(xml);
 
         if(o === null)
         {
