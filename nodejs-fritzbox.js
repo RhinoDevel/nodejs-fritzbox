@@ -53,9 +53,21 @@ const fb = { // FritzBox
                     eventSubUrl: '/upnp/control/x_homeauto',
                     serviceType: 'urn:dslforum-org:service:X_AVM-DE_Homeauto:1',
                     actionName: 'GetGenericDeviceInfos',
-                    arguments: '<u:NewIndex>'
-                                    + String(0) // Hard-coded index!
-                                + '</u:NewIndex>',
+                    argumentsFunc: function(actionArgs)
+                    {   
+                        let index = 0; // For backwards-compatibility.
+
+                        if(Array.isArray(actionArgs)
+                            && 1 <= actionArgs.length
+                            && Number.isInteger(actionArgs[0]))
+                        {
+                            index = actionArgs[0];
+                        }
+
+                        return '<u:NewIndex>'
+                                + String(indexToUse)
+                            + '</u:NewIndex>';
+                    },
 
                     /** Extract relevant data from given XML result retrieved
                      *  from FritzBox and return it.
@@ -107,20 +119,6 @@ const fb = { // FritzBox
 
     action = fb.con.actions[fb.con.actionPropName], // The action in use.
 
-    // POST message's body's content:
-    //
-    content = '<?xml version=\'1.0\' encoding=\'utf-8\'?>'
-        + '<s:Envelope'
-            + ' s:encodingStyle=\'http://schemas.xmlsoap.org/soap/encoding/\''
-            + ' xmlns:s=\'http://schemas.xmlsoap.org/soap/envelope/\'>'
-            + '<s:Body>'
-                + '<u:' + action.actionName
-                    + ' xmlns:u=\'' + action.serviceType + '\'>'
-                        + action.arguments
-                + '</u:' + action.actionName + '>'
-            + '</s:Body>'
-        + '</s:Envelope>',
-
     // Digest authentication stuff:
     //
     digestKeyDigestRealm = 'Digest realm',
@@ -138,22 +136,11 @@ const fb = { // FritzBox
 
     http = require('http'), // For HTTP requests to the FritzBox server.
     md5 = require('md5'), // To calculate MD5 hashes.
-    
-    options = { // Options to be used by/for the HTTP requests.
-            host: fb.con.ip,
-            path: action.eventSubUrl,
-            port: fb.con.port,
-            timeout: 5000, // ms
-            method: 'POST',
-            headers: {
-                'Content-Type': 'text/xml; charset="utf-8"',
-                'Content-Length': content.length,
-                'SoapAction': action.serviceType + '#' + action.actionName
-                // Bad: Authentication header will be added here by second req.!
-            }
-        },
 
-    execCallback = null, // To be filled by exec() function.
+    // To be filled/updated by exec() function:
+    execCallback = null,
+    content = null, // POST message's body's content.
+    options = null, // Options to be used by/for the HTTP requests.
 
     tryCallExecCallback = function(o)
     {
@@ -314,7 +301,7 @@ const fb = { // FritzBox
      *  Calls given callback function when done with argument being null on
      *  error or the retrieved data on success.
      */
-    exec = function(callback, username, password)
+    exec = function(callback, username, password, actionArgs)
     {
         let firstReq = null;
 
@@ -330,6 +317,32 @@ const fb = { // FritzBox
         {
             fb.con.password = password; // Kind of bad.
         }
+
+        content = '<?xml version=\'1.0\' encoding=\'utf-8\'?>'
+            + '<s:Envelope'
+                + ' s:encodingStyle=\'http://schemas.xmlsoap.org/soap/encoding/\''
+                + ' xmlns:s=\'http://schemas.xmlsoap.org/soap/envelope/\'>'
+                + '<s:Body>'
+                    + '<u:' + action.actionName
+                        + ' xmlns:u=\'' + action.serviceType + '\'>'
+                            + action.argumentsFunc(actionArgs)
+                    + '</u:' + action.actionName + '>'
+                + '</s:Body>'
+            + '</s:Envelope>';
+
+        options = {
+            host: fb.con.ip,
+            path: action.eventSubUrl,
+            port: fb.con.port,
+            timeout: 5000, // ms
+            method: 'POST',
+            headers: {
+                'Content-Type': 'text/xml; charset="utf-8"',
+                'Content-Length': content.length,
+                'SoapAction': action.serviceType + '#' + action.actionName
+                // Bad: Authentication header will be added here by second req.!
+            }
+        };
 
         // Trigger first HTTP request to FritzBox to get digest auth. nonce,
         // etc:
@@ -354,4 +367,4 @@ module.exports.exec = exec;
 
 // Option 2: To use as stand-alone script:
 //
-//exec(null, null, null);
+//exec(null, null, null, []);
