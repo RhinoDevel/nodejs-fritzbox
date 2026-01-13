@@ -1,9 +1,7 @@
 
 // *****************************************************************************
 // *** NodeJS script to communicate with an AVM FritzBox via TR-064          ***
-// *** interface and HTTP digest authentication by using two modules only    ***
-// *** and no fancy async. stuff or something else that makes this           ***
-// *** unnecessary difficult.                                                ***
+// *** interface and HTTP digest authentication by using two modules, only.  ***
 // *****************************************************************************
 
 // 2023jan07, Marcel Timm, RhinoDevel
@@ -331,7 +329,7 @@ const fb = { // FritzBox
         firstReq = http.request(options, onFirstReqStarted);
         firstReq.on(
             'error',
-            (e) => 
+            (e) =>
             {
                 console.error('Error: 1st req. failed: "' + e.message + '"!');
                 tryCallExecCallback(null);
