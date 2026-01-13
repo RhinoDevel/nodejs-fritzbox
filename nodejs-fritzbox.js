@@ -113,6 +113,30 @@ const fb = { // FritzBox
 
                         return retVal;
                     }
+                },
+
+                // Enable/disable internet access for a device with given IP.
+                disallowWANAccessByIP: {
+                    eventSubUrl: '/upnp/control/x_hostfilter',
+                    serviceType: 'urn:dslforum-org:service:X_AVM-DE_HostFilter:1',
+                    actionName: 'DisallowWANAccessByIP',
+                    argumentsFunc: function(actionArgs)
+                    {   
+                        return '<u:NewIPv4Address>'
+                                + actionArgs[0] // E.g. '192.168.178.14'
+                            + '</u:NewIPv4Address>'
+                            + '<u:NewDisallow>'
+                                + String(actionArgs[1]) // 0 or 1.
+                            + '</u:NewDisallow>'
+                    },
+
+                    /** Extract relevant data from given XML result retrieved
+                     *  from FritzBox and return it.
+                     */
+                    getResultObj: function(xml)
+                    {
+                        return {}; // We could return, if successful or not..
+                    }
                 }
             },
         },
