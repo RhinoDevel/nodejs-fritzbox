@@ -42,7 +42,7 @@ const fb = { // FritzBox
 
                 // Currently, only one action is available via this hard-coded
                 // setup (should be improved..):
-                actionPropName: 'getGenericDeviceInfos'
+                actionPropName: 'getGenericDeviceInfos'//'disallowWANAccessByIP'
             },
 
             // Add more here, if necessary and select one above, via
@@ -65,7 +65,7 @@ const fb = { // FritzBox
                         }
 
                         return '<u:NewIndex>'
-                                + String(indexToUse)
+                                + String(index)
                             + '</u:NewIndex>';
                     },
 
@@ -141,7 +141,7 @@ const fb = { // FritzBox
             },
         },
 
-    action = fb.con.actions[fb.con.actionPropName], // The action in use.
+    action = fb.actions[fb.con.actionPropName], // The action in use.
 
     // Digest authentication stuff:
     //
@@ -160,11 +160,6 @@ const fb = { // FritzBox
 
     http = require('http'), // For HTTP requests to the FritzBox server.
     md5 = require('md5'), // To calculate MD5 hashes.
-
-    // To be filled/updated by exec() function:
-    execCallback = null,
-    content = null, // POST message's body's content.
-    options = null, // Options to be used by/for the HTTP requests.
 
     tryCallExecCallback = function(o)
     {
@@ -384,6 +379,10 @@ const fb = { // FritzBox
         //
         // => onFirstReqStarted()
     };
+
+let execCallback = null, // To be filled/updated by exec() function.
+    content = null, // POST message's body's content.
+    options = null; // Options to be used by/for the HTTP requests.
 
 // Option 1: To use as module:
 //
