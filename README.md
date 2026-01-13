@@ -1,5 +1,5 @@
 # nodejs-fritzbox
-NodeJS script to communicate with an **AVM FritzBox** via **TR-064** interface and **HTTP digest authentication** by using two modules only and no fancy async. stuff or something else that makes this unnecessary difficult.
+NodeJS script to communicate with an **AVM FritzBox** via **TR-064** interface and **HTTP digest authentication** by using two modules, only.
 
 ## Requirements:
 - http (included in NodeJS)
