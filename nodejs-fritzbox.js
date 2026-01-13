@@ -18,7 +18,7 @@
 //
 // - Browse the source code of this file. It includes the connection settings
 //   and credentials to communicate with the FritzBox and also the (so called)
-//   action. That action can be replaced to let the FritzBox do something else.
+//   actions.
 
 // Notes:
 //
@@ -40,14 +40,9 @@ const fb = { // FritzBox
                 username: '********', // Kind of bad: May be overwritten,
                 password: '********', //              if file is used as module.
 
-                // Currently, only one action is available via this hard-coded
-                // setup (should be improved..):
-                actionPropName: 'getGenericDeviceInfos'//'disallowWANAccessByIP'
+                defaultActionPropName: 'getGenericDeviceInfos'
             },
 
-            // Add more here, if necessary and select one above, via
-            // fb.con.actionPropName:
-            //
             actions: {
                 getGenericDeviceInfos: { // Get smart switch data (via index).
                     eventSubUrl: '/upnp/control/x_homeauto',
@@ -55,7 +50,7 @@ const fb = { // FritzBox
                     actionName: 'GetGenericDeviceInfos',
                     argumentsFunc: function(actionArgs)
                     {   
-                        let index = 0; // For backwards-compatibility.
+                        let index = 0; // Default value.
 
                         if(Array.isArray(actionArgs)
                             && 1 <= actionArgs.length
@@ -140,8 +135,6 @@ const fb = { // FritzBox
                 }
             },
         },
-
-    action = fb.actions[fb.con.actionPropName], // The action in use.
 
     // Digest authentication stuff:
     //
@@ -320,7 +313,7 @@ const fb = { // FritzBox
      *  Calls given callback function when done with argument being null on
      *  error or the retrieved data on success.
      */
-    exec = function(callback, username, password, actionArgs)
+    exec = function(callback, username, password, actionPropName, actionArgs)
     {
         let firstReq = null;
 
@@ -335,6 +328,15 @@ const fb = { // FritzBox
         if(typeof password === 'string')
         {
             fb.con.password = password; // Kind of bad.
+        }
+
+        if(typeof actionPropName === 'string')
+        {
+            action = fb.actions[actionPropName];
+        }
+        else
+        {
+            action = fb.actions[fb.con.defaultActionPropName];
         }
 
         content = '<?xml version=\'1.0\' encoding=\'utf-8\'?>'
@@ -381,6 +383,7 @@ const fb = { // FritzBox
     };
 
 let execCallback = null, // To be filled/updated by exec() function.
+    action = null, // The action in use.
     content = null, // POST message's body's content.
     options = null; // Options to be used by/for the HTTP requests.
 
@@ -388,6 +391,6 @@ let execCallback = null, // To be filled/updated by exec() function.
 //
 module.exports.exec = exec;
 
-// Option 2: To use as stand-alone script:
+// Option 2: To use as stand-alone script, e.g. with default values:
 //
-//exec(null, null, null, []);
+//exec();
